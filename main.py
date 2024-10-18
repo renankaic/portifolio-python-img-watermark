@@ -56,6 +56,10 @@ class ImageWatermarkApp:
         if file_path:
             destination_entry.insert(0, file_path)
 
+    @staticmethod
+    def show_img(event, img: Image):
+        img.show()
+
     def watermark_image(self):
         img_fpath = self.form_source_img_entry.get().strip()
         watermark_fpath = self.form_watermark_img_entry.get().strip()
@@ -86,12 +90,14 @@ class ImageWatermarkApp:
                 else:
                     should_paste = True
 
-        img.thumbnail((300, 300))
-        tk_img = ImageTk.PhotoImage(img)
+        img_copy = img.copy()
+        img_copy.thumbnail((300, 300))
+        tk_img = ImageTk.PhotoImage(img_copy)
 
         self.canvas_result.create_image(0, 0, anchor="nw", image=tk_img)
         self.canvas_result.grid()
         self.canvas_result.image = tk_img
+        self.canvas_result.bind("<Button-1>", lambda event: self.show_img(event, img))
 
         # img.show()
 
@@ -105,6 +111,7 @@ class ImageWatermarkApp:
         # if destination_file:
         #     # TODO: finish watermarking process
         #     print(destination_file)
+
 
 
 if __name__ == '__main__':

@@ -15,6 +15,8 @@ class ImageWatermarkApp:
         self._current_row = 0
 
         self._preview_hidden = True
+        self._img = None
+        self._watermark = None
 
         canvas_my_app = tkinter.Canvas(width=300, height=200)
         tk_img_my_app = ImageTk.PhotoImage(Image.open('logo.jpg'))
@@ -22,9 +24,11 @@ class ImageWatermarkApp:
         canvas_my_app.grid(row=0, column=1, pady=30)
 
         # Source image
+        self.img_filepath = tkinter.StringVar()
+        self.img_filepath.trace_add("write", self.on_filepath_change)
         form_source_img_lbl = tkinter.Label(text='Image to be watermarked: ', font=FORM_LBL_FONT)
         form_source_img_lbl.grid(row=1, column=0)
-        self.form_source_img_entry = tkinter.Entry(width=50)
+        self.form_source_img_entry = tkinter.Entry(width=50, textvariable=self.img_filepath)
         self.form_source_img_entry.grid(row=1, column=1)
         form_source_img_bt = tkinter.Button(text="Browse...", width=20,
                                             command=lambda: self.open_filedialog(
@@ -33,9 +37,11 @@ class ImageWatermarkApp:
         form_source_img_bt.grid(row=1, column=3)
 
         # Watermark to be placed
+        self.watermark_filepath = tkinter.StringVar()
+        self.watermark_filepath.trace_add("write", self.on_filepath_change)
         form_watermark_img_lbl = tkinter.Label(text='Watermark to be placed: ', font=FORM_LBL_FONT)
         form_watermark_img_lbl.grid(row=2, column=0)
-        self.form_watermark_img_entry = tkinter.Entry(width=50)
+        self.form_watermark_img_entry = tkinter.Entry(width=50, textvariable=self.watermark_filepath)
         self.form_watermark_img_entry.grid(row=2, column=1)
         form_watermark_img_bt = tkinter.Button(text="Browse...", width=20,
                                                command=lambda: self.open_filedialog(
@@ -47,19 +53,21 @@ class ImageWatermarkApp:
         lbl_wk_size_reduction = tkinter.Label(text='Watermark reduce size in %:', font=FORM_LBL_FONT)
         lbl_wk_size_reduction.grid(row=3, column=0)
         self.scale_wk_size_reduction = tkinter.Scale(from_=0, to=100, orient=tkinter.HORIZONTAL, length=250,
-                                                   command=self.on_scale_change)
+                                                     command=self.on_scale_change)
         self.scale_wk_size_reduction.grid(row=3, column=1)
 
         # Watermark rotation scale
         lbl_wk_rotation = tkinter.Label(text='Watermark rotation angle: ', font=FORM_LBL_FONT)
         lbl_wk_rotation.grid(row=4, column=0)
-        self.scale_wk_rotation = tkinter.Scale(from_=0, to=360, orient=tkinter.HORIZONTAL, length=250, command=self.on_scale_change)
+        self.scale_wk_rotation = tkinter.Scale(from_=0, to=360, orient=tkinter.HORIZONTAL, length=250,
+                                               command=self.on_scale_change)
         self.scale_wk_rotation.grid(row=4, column=1)
 
         # Watermark opacity scale
         lbl_wk_transparency = tkinter.Label(text='Watermark transparency:', font=FORM_LBL_FONT)
         lbl_wk_transparency.grid(row=5, column=0)
-        self.scale_wk_transparency = tkinter.Scale(from_=0, to=100, orient=tkinter.HORIZONTAL, length=250, command=self.on_scale_change)
+        self.scale_wk_transparency = tkinter.Scale(from_=0, to=100, orient=tkinter.HORIZONTAL, length=250,
+                                                   command=self.on_scale_change)
         self.scale_wk_transparency.grid(row=5, column=1)
 
         # Watermark Image button
@@ -68,7 +76,7 @@ class ImageWatermarkApp:
 
         # Canvas result
         self.canvas_result = tkinter.Canvas(width=600, height=300)
-        self.canvas_result.grid(row=7, columnspan=6,  sticky='ew')
+        self.canvas_result.grid(row=7, columnspan=6, sticky='ew')
         self.canvas_result.grid_remove()
 
         # Save watermarked image button
@@ -86,15 +94,11 @@ class ImageWatermarkApp:
             destination_entry.delete(0, 'end')
             destination_entry.insert(0, file_path)
 
-    @staticmethod
-    def show_img(event, img: Image):
-        img.show()
-
     def on_scale_change(self, value):
         self.update_preview()
 
-    def get_real_defined_transparency(self):
-        return 1 - float(self.scale_wk_transparency.get() / 100)
+    def on_filepath_change(self, *args):
+        self.destroy_img_instances()
 
     def reduce_img_size(self, current_size: tuple):
         """
@@ -112,17 +116,48 @@ class ImageWatermarkApp:
         if hasattr(self.canvas_result, 'image') and self.canvas_result.image is not None:
             self.watermark_image()
 
+    def get_real_defined_transparency(self):
+        return 1 - float(self.scale_wk_transparency.get() / 100)
+
+    def get_img(self, fpath: str):
+        if not self._img:
+            self._img = Image.open(fpath).convert('RGBA')
+        return self._img.copy()
+
+    def get_watermark(self, fpath: str):
+        if not self._watermark:
+            self._watermark = Image.open(fpath).convert('RGBA')
+        return self._watermark.copy()
+
+    def destroy_img_instances(self):
+        """
+        This function destroys the memory references of self._img and self._watermark variables by setting both as None.
+        It'll ensure that both will be reloaded from disk when 'get_img' and 'get_watermark' functions are called.
+        :return:
+        """
+        self._img = None
+        self._watermark = None
+
     def watermark_image(self):
-        img_fpath = self.form_source_img_entry.get().strip()
-        watermark_fpath = self.form_watermark_img_entry.get().strip()
+        img_fpath = self.img_filepath.get().strip()
+        watermark_fpath = self.watermark_filepath.get().strip()
 
         if not img_fpath or not watermark_fpath:
             messagebox.showerror(title='Oops',
                                  message='Please, input the path for both image and watermark image files.')
             return
 
-        img = Image.open(img_fpath).convert('RGBA')
-        watermark = Image.open(watermark_fpath).convert('RGBA')
+        try:
+            img = self.get_img(img_fpath)
+        except FileNotFoundError:
+            messagebox.showerror(title='Error', message='Source image file not found!')
+            return
+
+        try:
+            watermark = self.get_watermark(watermark_fpath)
+        except FileNotFoundError:
+            messagebox.showerror(title='Error', message='Watermark image file not found!')
+            return
 
         # Adjust watermark size
         if self.scale_wk_size_reduction.get() != 0:
@@ -167,6 +202,10 @@ class ImageWatermarkApp:
         self.save_img_bt.config(command=lambda: self.save_watermarked_image(img))
 
     @staticmethod
+    def show_img(event, img: Image):
+        img.show()
+
+    @staticmethod
     def save_watermarked_image(img: Image):
         destination_filepath = filedialog.asksaveasfilename(title='Save the new image as...',
                                                             defaultextension='.png',
@@ -174,7 +213,8 @@ class ImageWatermarkApp:
                                                             )
         if destination_filepath:
             img.save(destination_filepath, "png")
-            question = messagebox.askyesno(title='Success', message='Image saved successfully!\nWould you like to open the destination folder?')
+            question = messagebox.askyesno(title='Success',
+                                           message='Image saved successfully!\nWould you like to open the destination folder?')
             if question:
                 destination_folder = destination_filepath[:destination_filepath.rindex('/')]
                 os.startfile(destination_folder)

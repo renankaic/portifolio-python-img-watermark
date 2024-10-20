@@ -97,6 +97,13 @@ class ImageWatermarkApp:
         return 1 - float(self.scale_wk_transparency.get() / 100)
 
     def reduce_img_size(self, current_size: tuple):
+        """
+        Returns a new (width, height) after passing through a reduction factor.
+        The reduction factor is obtained from self.scale_wk_size_reduction scale value.
+
+        :param current_size: A tuple containing the (width, height) of an image
+        :return: A tuple containing the new (width, height) after the size reduction
+        """
         cur_width, cur_height = current_size
         reduction_factor = 1 - float(self.scale_wk_size_reduction.get() / 100)
         return int(cur_width * reduction_factor), int(cur_height * reduction_factor)
@@ -122,11 +129,14 @@ class ImageWatermarkApp:
             watermark = watermark.resize(self.reduce_img_size(watermark.size))
 
         # Adjust watermark opacity
-        alpha = watermark.split()[3]
-        alpha = ImageEnhance.Brightness(alpha).enhance(self.get_real_defined_transparency())
-        watermark.putalpha(alpha)
+        if self.scale_wk_transparency.get() != 0:
+            alpha = watermark.split()[3]
+            alpha = ImageEnhance.Brightness(alpha).enhance(self.get_real_defined_transparency())
+            watermark.putalpha(alpha)
 
-        watermark = watermark.rotate(self.scale_wk_rotation.get(), expand=True)
+        # Adjust watermark rotation angle
+        if self.scale_wk_rotation != 0:
+            watermark = watermark.rotate(self.scale_wk_rotation.get(), expand=True)
 
         img_width, img_height = img.size
         watermark_width, watermark_height = watermark.size

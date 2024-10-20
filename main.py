@@ -70,18 +70,34 @@ class ImageWatermarkApp:
                                                    command=self.on_scale_change)
         self.scale_wk_transparency.grid(row=5, column=1)
 
+        # Watermark vertical distance scale
+        lbl_wk_v_distance = tkinter.Label(text='Watermark vertical distance:', font=FORM_LBL_FONT)
+        lbl_wk_v_distance.grid(row=6, column=0)
+        self.scale_wk_v_distance = tkinter.Scale(from_=0, to=1000, orient=tkinter.HORIZONTAL, length=250,
+                                                 command=self.on_scale_change)
+        self.scale_wk_v_distance.grid(row=6, column=1)
+        self.scale_wk_v_distance.set(50)
+
+        # Watermark horizontal distance scale
+        lbl_wk_h_distance = tkinter.Label(text='Watermark horizontal distance:', font=FORM_LBL_FONT)
+        lbl_wk_h_distance.grid(row=7, column=0)
+        self.scale_wk_h_distance = tkinter.Scale(from_=0, to=1000, orient=tkinter.HORIZONTAL, length=250,
+                                                 command=self.on_scale_change)
+        self.scale_wk_h_distance.grid(row=7, column=1)
+        self.scale_wk_h_distance.set(50)
+
         # Watermark Image button
         watermark_img_bt = tkinter.Button(text="Watermark image!", width=50, command=self.watermark_image)
-        watermark_img_bt.grid(row=6, pady=30, sticky='ew', columnspan=6)
+        watermark_img_bt.grid(row=8, sticky='ew', columnspan=6)
 
         # Canvas result
         self.canvas_result = tkinter.Canvas(width=600, height=300)
-        self.canvas_result.grid(row=7, columnspan=6, sticky='ew')
+        self.canvas_result.grid(row=9, columnspan=6, pady=30)
         self.canvas_result.grid_remove()
 
         # Save watermarked image button
         self.save_img_bt = tkinter.Button(text='Save watermarked image as...', width=50)
-        self.save_img_bt.grid(row=8, columnspan=6, sticky='ew')
+        self.save_img_bt.grid(row=10, columnspan=6, sticky='ew')
         self.save_img_bt.grid_remove()
 
         self.window.mainloop()
@@ -177,8 +193,8 @@ class ImageWatermarkApp:
         watermark_width, watermark_height = watermark.size
 
         should_paste = True
-        for i in range(0, img_width, watermark_width + 100):
-            for j in range(0, img_height, watermark_height + 75):
+        for i in range(0, img_width, watermark_width + int(self.scale_wk_h_distance.get())):
+            for j in range(0, img_height, watermark_height + int(self.scale_wk_v_distance.get())):
                 if should_paste:
                     img.paste(watermark, (i, j), watermark)
                     should_paste = False

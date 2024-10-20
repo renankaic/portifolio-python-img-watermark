@@ -1,3 +1,5 @@
+import time
+
 from PIL import Image, ImageTk, ImageEnhance
 from tkinter import filedialog, messagebox
 import tkinter, os
@@ -11,6 +13,8 @@ class ImageWatermarkApp:
         self.window.title("Image Watermark App")
         self.window.config(padx=50, pady=50)
         self._current_row = 0
+
+        self._preview_hidden = True
 
         canvas_my_app = tkinter.Canvas(width=300, height=200)
         tk_img_my_app = ImageTk.PhotoImage(Image.open('logo.jpg'))
@@ -42,7 +46,7 @@ class ImageWatermarkApp:
         # Watermark rotation scale
         lbl_wk_rotation = tkinter.Label(text='Watermark rotation angle: ', font=FORM_LBL_FONT)
         lbl_wk_rotation.grid(row=3, column=0)
-        self.scale_wk_rotation = tkinter.Scale(from_=0, to=360, orient=tkinter.HORIZONTAL, length=250, command=self.update_preview)
+        self.scale_wk_rotation = tkinter.Scale(from_=0, to=360, orient=tkinter.HORIZONTAL, length=250, command=self.on_scale_change)
         self.scale_wk_rotation.grid(row=3, column=1)
 
         # Begin button
@@ -73,7 +77,10 @@ class ImageWatermarkApp:
     def show_img(event, img: Image):
         img.show()
 
-    def update_preview(self, event):
+    def on_scale_change(self, value):
+        self.update_preview()
+
+    def update_preview(self):
         if hasattr(self.canvas_result, 'image') and self.canvas_result.image is not None:
             self.watermark_image()
 
@@ -113,12 +120,15 @@ class ImageWatermarkApp:
         tk_img = ImageTk.PhotoImage(img_copy)
 
         self.canvas_result.create_image(0, 0, anchor="nw", image=tk_img)
-        self.canvas_result.grid()
         self.canvas_result.image = tk_img
-        self.canvas_result.bind("<Button-1>", lambda event: self.show_img(event, img))
 
         # Shows the save image button
-        self.save_img_bt.grid()
+        if self._preview_hidden:
+            self.canvas_result.grid()
+            self.save_img_bt.grid()
+            self._preview_hidden = False
+
+        self.canvas_result.bind("<Button-1>", lambda event: self.show_img(event, img))
         self.save_img_bt.config(command=lambda: self.save_watermarked_image(img))
 
     @staticmethod

@@ -1,6 +1,6 @@
 from PIL import Image, ImageTk, ImageEnhance
 from tkinter import filedialog, messagebox
-import tkinter
+import tkinter, os
 
 FORM_LBL_FONT = ('Arial', 12, "normal")
 
@@ -47,6 +47,11 @@ class ImageWatermarkApp:
         self.canvas_result.grid(row=4, column=0, columnspan=6)
         self.canvas_result.grid_remove()
 
+        # Save watermarked image button
+        self.save_img_bt = tkinter.Button(text='Save watermarked image as...', width=50)
+        self.save_img_bt.grid(row=5, column=0, columnspan=6)
+        self.save_img_bt.grid_remove()
+
         self.window.mainloop()
 
     @staticmethod
@@ -65,7 +70,8 @@ class ImageWatermarkApp:
         watermark_fpath = self.form_watermark_img_entry.get().strip()
 
         if not img_fpath or not watermark_fpath:
-            messagebox.showerror(title='Oops', message='Please, input the path for both image and watermark image files.')
+            messagebox.showerror(title='Oops',
+                                 message='Please, input the path for both image and watermark image files.')
             return
 
         img = Image.open(img_fpath).convert('RGBA')
@@ -99,18 +105,24 @@ class ImageWatermarkApp:
         self.canvas_result.image = tk_img
         self.canvas_result.bind("<Button-1>", lambda event: self.show_img(event, img))
 
-        # img.show()
+        # Shows the save image button
+        self.save_img_bt.grid()
+        self.save_img_bt.config(command=lambda: self.save_watermarked_image(img))
 
         return None
 
-
-        # destination_file = filedialog.asksaveasfilename(title='Save the new image as...',
-        #                                                 defaultextension='.png',
-        #                                                 filetypes=[('PNG File', '*.png')]
-        #                                                 )
-        # if destination_file:
-        #     # TODO: finish watermarking process
-        #     print(destination_file)
+    @staticmethod
+    def save_watermarked_image(img: Image):
+        destination_filepath = filedialog.asksaveasfilename(title='Save the new image as...',
+                                                            defaultextension='.png',
+                                                            filetypes=[('PNG File', '*.png')]
+                                                            )
+        if destination_filepath:
+            img.save(destination_filepath, "png")
+            question = messagebox.askyesno(title='Success', message='Image saved successfully!\nWould you like to open the destination folder?')
+            if question:
+                destination_folder = destination_filepath[:destination_filepath.rindex('/')]
+                os.startfile(destination_folder)
 
 
 if __name__ == '__main__':

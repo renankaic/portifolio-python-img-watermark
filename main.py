@@ -43,8 +43,8 @@ class ImageWatermarkApp:
         begin_bt.grid(row=3, column=1, pady=30)
 
         # Canvas result
-        self.canvas_result = tkinter.Canvas(width=300, height=300)
-        self.canvas_result.grid(row=4, column=0, columnspan=3)
+        self.canvas_result = tkinter.Canvas(width=600, height=300)
+        self.canvas_result.grid(row=4, column=0, columnspan=6)
         self.canvas_result.grid_remove()
 
         self.window.mainloop()
@@ -91,7 +91,7 @@ class ImageWatermarkApp:
                     should_paste = True
 
         img_copy = img.copy()
-        img_copy.thumbnail((300, 300))
+        img_copy.thumbnail((600, 600))
         tk_img = ImageTk.PhotoImage(img_copy)
 
         self.canvas_result.create_image(0, 0, anchor="nw", image=tk_img)
@@ -111,7 +111,6 @@ class ImageWatermarkApp:
         # if destination_file:
         #     # TODO: finish watermarking process
         #     print(destination_file)
-
 
 
 if __name__ == '__main__':

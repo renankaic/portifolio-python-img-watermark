@@ -43,30 +43,37 @@ class ImageWatermarkApp:
                                                highlightthickness=0)
         form_watermark_img_bt.grid(row=2, column=3)
 
+        # Watermark reduce size scale
+        lbl_wk_size_reduction = tkinter.Label(text='Watermark reduce size in %:', font=FORM_LBL_FONT)
+        lbl_wk_size_reduction.grid(row=3, column=0)
+        self.scale_wk_size_reduction = tkinter.Scale(from_=0, to=100, orient=tkinter.HORIZONTAL, length=250,
+                                                   command=self.on_scale_change)
+        self.scale_wk_size_reduction.grid(row=3, column=1)
+
         # Watermark rotation scale
         lbl_wk_rotation = tkinter.Label(text='Watermark rotation angle: ', font=FORM_LBL_FONT)
-        lbl_wk_rotation.grid(row=3, column=0)
+        lbl_wk_rotation.grid(row=4, column=0)
         self.scale_wk_rotation = tkinter.Scale(from_=0, to=360, orient=tkinter.HORIZONTAL, length=250, command=self.on_scale_change)
-        self.scale_wk_rotation.grid(row=3, column=1)
+        self.scale_wk_rotation.grid(row=4, column=1)
 
         # Watermark opacity scale
-        lbl_wk_transparency = tkinter.Label(text='Watermark transparency', font=FORM_LBL_FONT)
-        lbl_wk_transparency.grid(row=4, column=0)
+        lbl_wk_transparency = tkinter.Label(text='Watermark transparency:', font=FORM_LBL_FONT)
+        lbl_wk_transparency.grid(row=5, column=0)
         self.scale_wk_transparency = tkinter.Scale(from_=0, to=100, orient=tkinter.HORIZONTAL, length=250, command=self.on_scale_change)
-        self.scale_wk_transparency.grid(row=4, column=1)
+        self.scale_wk_transparency.grid(row=5, column=1)
 
-        # Begin button
-        begin_bt = tkinter.Button(text="Watermark image!", width=50, command=self.watermark_image)
-        begin_bt.grid(row=5, column=1, pady=30)
+        # Watermark Image button
+        watermark_img_bt = tkinter.Button(text="Watermark image!", width=50, command=self.watermark_image)
+        watermark_img_bt.grid(row=6, pady=30, sticky='ew', columnspan=6)
 
         # Canvas result
         self.canvas_result = tkinter.Canvas(width=600, height=300)
-        self.canvas_result.grid(row=6, column=0, columnspan=6)
+        self.canvas_result.grid(row=7, columnspan=6,  sticky='ew')
         self.canvas_result.grid_remove()
 
         # Save watermarked image button
         self.save_img_bt = tkinter.Button(text='Save watermarked image as...', width=50)
-        self.save_img_bt.grid(row=7, column=0, columnspan=6)
+        self.save_img_bt.grid(row=8, columnspan=6, sticky='ew')
         self.save_img_bt.grid_remove()
 
         self.window.mainloop()
@@ -89,6 +96,11 @@ class ImageWatermarkApp:
     def get_real_defined_transparency(self):
         return 1 - float(self.scale_wk_transparency.get() / 100)
 
+    def reduce_img_size(self, current_size: tuple):
+        cur_width, cur_height = current_size
+        reduction_factor = 1 - float(self.scale_wk_size_reduction.get() / 100)
+        return int(cur_width * reduction_factor), int(cur_height * reduction_factor)
+
     def update_preview(self):
         if hasattr(self.canvas_result, 'image') and self.canvas_result.image is not None:
             self.watermark_image()
@@ -104,6 +116,10 @@ class ImageWatermarkApp:
 
         img = Image.open(img_fpath).convert('RGBA')
         watermark = Image.open(watermark_fpath).convert('RGBA')
+
+        # Adjust watermark size
+        if self.scale_wk_size_reduction.get() != 0:
+            watermark = watermark.resize(self.reduce_img_size(watermark.size))
 
         # Adjust watermark opacity
         alpha = watermark.split()[3]

@@ -59,6 +59,7 @@ class ImageWatermarkApp:
         file_path = filedialog.askopenfilename(title='Select an image',
                                                filetypes=[('Images', '*.png;*.jpg;*.jpeg;*.gif')])
         if file_path:
+            destination_entry.delete(0, 'end')
             destination_entry.insert(0, file_path)
 
     @staticmethod

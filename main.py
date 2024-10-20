@@ -10,6 +10,7 @@ class ImageWatermarkApp:
         self.window = tkinter.Tk()
         self.window.title("Image Watermark App")
         self.window.config(padx=50, pady=50)
+        self._current_row = 0
 
         canvas_my_app = tkinter.Canvas(width=300, height=200)
         tk_img_my_app = ImageTk.PhotoImage(Image.open('logo.jpg'))
@@ -38,18 +39,24 @@ class ImageWatermarkApp:
                                                highlightthickness=0)
         form_watermark_img_bt.grid(row=2, column=3)
 
+        # Watermark rotation scale
+        lbl_wk_rotation = tkinter.Label(text='Watermark rotation angle: ', font=FORM_LBL_FONT)
+        lbl_wk_rotation.grid(row=3, column=0)
+        self.scale_wk_rotation = tkinter.Scale(from_=0, to=360, orient=tkinter.HORIZONTAL, length=250, command=self.update_preview)
+        self.scale_wk_rotation.grid(row=3, column=1)
+
         # Begin button
         begin_bt = tkinter.Button(text="Watermark image!", width=50, command=self.watermark_image)
-        begin_bt.grid(row=3, column=1, pady=30)
+        begin_bt.grid(row=4, column=1, pady=30)
 
         # Canvas result
         self.canvas_result = tkinter.Canvas(width=600, height=300)
-        self.canvas_result.grid(row=4, column=0, columnspan=6)
+        self.canvas_result.grid(row=5, column=0, columnspan=6)
         self.canvas_result.grid_remove()
 
         # Save watermarked image button
         self.save_img_bt = tkinter.Button(text='Save watermarked image as...', width=50)
-        self.save_img_bt.grid(row=5, column=0, columnspan=6)
+        self.save_img_bt.grid(row=6, column=0, columnspan=6)
         self.save_img_bt.grid_remove()
 
         self.window.mainloop()
@@ -65,6 +72,10 @@ class ImageWatermarkApp:
     @staticmethod
     def show_img(event, img: Image):
         img.show()
+
+    def update_preview(self, event):
+        if hasattr(self.canvas_result, 'image') and self.canvas_result.image is not None:
+            self.watermark_image()
 
     def watermark_image(self):
         img_fpath = self.form_source_img_entry.get().strip()
@@ -83,7 +94,7 @@ class ImageWatermarkApp:
         alpha = ImageEnhance.Brightness(alpha).enhance(0.8)
         watermark.putalpha(alpha)
 
-        watermark = watermark.rotate(30, expand=True)
+        watermark = watermark.rotate(self.scale_wk_rotation.get(), expand=True)
 
         img_width, img_height = img.size
         watermark_width, watermark_height = watermark.size
@@ -109,8 +120,6 @@ class ImageWatermarkApp:
         # Shows the save image button
         self.save_img_bt.grid()
         self.save_img_bt.config(command=lambda: self.save_watermarked_image(img))
-
-        return None
 
     @staticmethod
     def save_watermarked_image(img: Image):

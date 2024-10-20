@@ -49,18 +49,24 @@ class ImageWatermarkApp:
         self.scale_wk_rotation = tkinter.Scale(from_=0, to=360, orient=tkinter.HORIZONTAL, length=250, command=self.on_scale_change)
         self.scale_wk_rotation.grid(row=3, column=1)
 
+        # Watermark opacity scale
+        lbl_wk_transparency = tkinter.Label(text='Watermark transparency', font=FORM_LBL_FONT)
+        lbl_wk_transparency.grid(row=4, column=0)
+        self.scale_wk_transparency = tkinter.Scale(from_=0, to=100, orient=tkinter.HORIZONTAL, length=250, command=self.on_scale_change)
+        self.scale_wk_transparency.grid(row=4, column=1)
+
         # Begin button
         begin_bt = tkinter.Button(text="Watermark image!", width=50, command=self.watermark_image)
-        begin_bt.grid(row=4, column=1, pady=30)
+        begin_bt.grid(row=5, column=1, pady=30)
 
         # Canvas result
         self.canvas_result = tkinter.Canvas(width=600, height=300)
-        self.canvas_result.grid(row=5, column=0, columnspan=6)
+        self.canvas_result.grid(row=6, column=0, columnspan=6)
         self.canvas_result.grid_remove()
 
         # Save watermarked image button
         self.save_img_bt = tkinter.Button(text='Save watermarked image as...', width=50)
-        self.save_img_bt.grid(row=6, column=0, columnspan=6)
+        self.save_img_bt.grid(row=7, column=0, columnspan=6)
         self.save_img_bt.grid_remove()
 
         self.window.mainloop()
@@ -80,6 +86,9 @@ class ImageWatermarkApp:
     def on_scale_change(self, value):
         self.update_preview()
 
+    def get_real_defined_transparency(self):
+        return 1 - float(self.scale_wk_transparency.get() / 100)
+
     def update_preview(self):
         if hasattr(self.canvas_result, 'image') and self.canvas_result.image is not None:
             self.watermark_image()
@@ -98,7 +107,7 @@ class ImageWatermarkApp:
 
         # Adjust watermark opacity
         alpha = watermark.split()[3]
-        alpha = ImageEnhance.Brightness(alpha).enhance(0.8)
+        alpha = ImageEnhance.Brightness(alpha).enhance(self.get_real_defined_transparency())
         watermark.putalpha(alpha)
 
         watermark = watermark.rotate(self.scale_wk_rotation.get(), expand=True)
